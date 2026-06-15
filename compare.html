@@ -1,0 +1,48 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LZY JSON 对比</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell compare-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">{ }</span>
+          <div>
+            <h1>JSON 对比</h1>
+            <p>比较两份 JSON 的字段新增、删除和值变化</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <a class="icon-btn link-btn" href="./index.html">解析</a>
+          <button id="compareSampleBtn" class="icon-btn" type="button">示例</button>
+          <button id="compareClearBtn" class="icon-btn" type="button">清空</button>
+        </div>
+      </header>
+
+      <section class="compare-workspace">
+        <section class="compare-grid">
+          <label class="compare-pane">
+            <span>左侧</span>
+            <textarea id="leftInput" spellcheck="false" placeholder="粘贴第一份 JSON 或日志"></textarea>
+          </label>
+          <label class="compare-pane">
+            <span>右侧</span>
+            <textarea id="rightInput" spellcheck="false" placeholder="粘贴第二份 JSON 或日志"></textarea>
+          </label>
+        </section>
+
+        <section class="compare-result-pane">
+          <div id="compareSummary" class="diff-summary">等待输入</div>
+          <div id="compareResult" class="diff-result"></div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./compare.js"></script>
+  </body>
+</html>

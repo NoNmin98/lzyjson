@@ -1,0 +1,157 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LZY JSON</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">{ }</span>
+          <div>
+            <h1>LZY JSON</h1>
+            <p>从日志、截断文本、转义字符串里把 JSON 看清楚</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <button id="sampleBtn" class="icon-btn" type="button" title="载入示例">示例</button>
+          <button id="multiSampleBtn" class="icon-btn" type="button" title="载入多 JSON 示例">
+            多 JSON
+          </button>
+          <button id="longSampleBtn" class="icon-btn" type="button" title="载入超长示例">
+            长示例
+          </button>
+          <a class="icon-btn link-btn" href="./compare.html">对比</a>
+        </div>
+      </header>
+
+      <section class="workspace">
+        <section class="pane input-pane" aria-label="输入区">
+          <div class="pane-head">
+            <div>
+              <h2>输入</h2>
+              <span id="inputMeta">0 字符</span>
+            </div>
+            <div class="inline-actions">
+              <button id="pasteBtn" type="button">粘贴</button>
+              <button id="formatInputBtn" type="button">提取后格式化</button>
+            </div>
+          </div>
+          <textarea
+            id="sourceInput"
+            spellcheck="false"
+            placeholder='粘贴 JSON、日志、JSON Lines、半截响应，或包含 "{\"code\":0}" 的字符串'
+          ></textarea>
+        </section>
+
+        <div
+          id="splitHandle"
+          class="split-handle"
+          role="separator"
+          aria-label="调整输入和结果宽度"
+          aria-orientation="vertical"
+        ></div>
+
+        <section class="pane result-pane" aria-label="结果区">
+          <div class="pane-head">
+            <div>
+              <h2>结果</h2>
+              <span id="resultMeta">等待输入</span>
+            </div>
+            <div class="inline-actions">
+              <button id="copyBtn" type="button">复制</button>
+              <button id="copyDecodedBtn" type="button">复制中文</button>
+              <button id="minifyBtn" type="button">压缩</button>
+              <button id="maskToggleBtn" type="button">脱敏</button>
+              <button id="clearBtn" type="button">清空</button>
+            </div>
+          </div>
+
+          <div id="statusPanel" class="status-panel idle">
+            粘贴内容后自动解析。所有处理都在本地浏览器完成。
+          </div>
+
+          <div id="candidateBar" class="candidate-bar" hidden></div>
+
+          <button id="contextToggle" class="context-toggle" type="button" hidden>
+            检测到前缀/后缀
+          </button>
+
+          <div id="contextPanel" class="context-popover" hidden>
+            <div class="context-popover-head">
+              <strong>前缀 / 后缀</strong>
+              <button id="contextCloseBtn" type="button">关闭</button>
+            </div>
+            <div class="context-item">
+              <div class="context-head">
+                <strong>前缀</strong>
+                <button id="copyPrefixBtn" type="button">复制</button>
+              </div>
+              <div id="prefixView" class="context-tokens"></div>
+            </div>
+            <div class="context-item">
+              <div class="context-head">
+                <strong>后缀</strong>
+                <button id="copySuffixBtn" type="button">复制</button>
+              </div>
+              <div id="suffixView" class="context-tokens"></div>
+            </div>
+          </div>
+
+          <div class="tool-row">
+            <label class="search-box">
+              <span>搜索</span>
+              <input id="searchInput" type="search" placeholder="key / value / 路径" />
+            </label>
+            <div class="switches" aria-label="解析选项">
+              <label title="把字符串里的 \\u4e2d\\u6587 显示成中文">
+                <input id="decodeUnicodeOption" type="checkbox" />
+                <span>中文转义</span>
+              </label>
+              <label title="把字符串里的 JSON 展开为对象或数组">
+                <input id="expandStringJsonOption" type="checkbox" />
+                <span>字符串 JSON</span>
+              </label>
+            </div>
+            <div class="tabs" role="tablist" aria-label="结果视图">
+              <button class="tab active" id="treeTab" type="button">树</button>
+              <button class="tab" id="rawTab" type="button">文本</button>
+              <button class="tab" id="tableTab" type="button">表格</button>
+            </div>
+          </div>
+
+          <div class="view-stack">
+            <div id="treeView" class="tree-view"></div>
+            <pre id="rawView" class="raw-view" hidden></pre>
+            <div id="tableView" class="table-view" hidden></div>
+            <div id="diffView" class="diff-view" hidden>
+              <div class="diff-input-row">
+                <div>
+                  <strong>左侧</strong>
+                  <p>当前解析结果</p>
+                </div>
+                <label>
+                  <span>右侧</span>
+                  <textarea
+                    id="diffInput"
+                    spellcheck="false"
+                    placeholder="粘贴另一份 JSON、日志或响应，用来和当前结果对比"
+                  ></textarea>
+                </label>
+              </div>
+              <div id="diffSummary" class="diff-summary">等待右侧输入</div>
+              <div id="diffResult" class="diff-result"></div>
+            </div>
+          </div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+
+    <script src="./app.js"></script>
+  </body>
+</html>

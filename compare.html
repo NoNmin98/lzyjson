@@ -17,13 +17,23 @@
           </div>
         </div>
         <div class="top-actions">
-          <a class="icon-btn link-btn" href="./index.html">解析</a>
-          <button id="compareSampleBtn" class="icon-btn" type="button">示例</button>
-          <button id="compareClearBtn" class="icon-btn" type="button">清空</button>
+          <a class="icon-btn link-btn" href="./index.html">JSON 解析</a>
+          <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
+          <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
         </div>
       </header>
 
       <section class="compare-workspace">
+        <div class="page-actions">
+          <div class="case-menu">
+            <button id="compareCaseBtn" type="button" aria-expanded="false">案例</button>
+            <div id="compareCaseMenu" class="case-popover" hidden>
+              <button type="button" data-compare-sample="complex">复杂差异</button>
+              <button type="button" data-compare-sample="simple">基础差异</button>
+            </div>
+          </div>
+          <button id="compareClearBtn" type="button">清空</button>
+        </div>
         <section class="compare-grid">
           <label class="compare-pane">
             <span>左侧</span>

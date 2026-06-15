@@ -4,6 +4,8 @@
     right: document.querySelector("#rightInput"),
     summary: document.querySelector("#compareSummary"),
     result: document.querySelector("#compareResult"),
+    caseBtn: document.querySelector("#compareCaseBtn"),
+    caseMenu: document.querySelector("#compareCaseMenu"),
   };
 
   const sampleLeft = `2026-06-12 INFO env=prod traceId=cmp-a body=${JSON.stringify({
@@ -81,6 +83,35 @@
     },
     warnings: ["profile-phone-removed", "order-list-changed"],
   })} cost=57ms`;
+
+  const simpleLeft = JSON.stringify(
+    {
+      code: 0,
+      data: {
+        id: 1,
+        name: "张三",
+        tags: ["admin", "ops"],
+        enabled: true,
+      },
+    },
+    null,
+    2,
+  );
+
+  const simpleRight = JSON.stringify(
+    {
+      code: 0,
+      data: {
+        id: 1,
+        name: "李四",
+        tags: ["admin", "dev"],
+        enabled: false,
+        score: 98,
+      },
+    },
+    null,
+    2,
+  );
 
   function debounce(fn, delay) {
     let timer = null;
@@ -323,10 +354,33 @@
     els.result.innerHTML = renderJsonBodyDiff(left.value, right.value);
   }
 
-  document.querySelector("#compareSampleBtn").addEventListener("click", () => {
-    els.left.value = sampleLeft;
-    els.right.value = sampleRight;
+  els.caseBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const nextOpen = els.caseMenu.hidden;
+    els.caseMenu.hidden = !nextOpen;
+    els.caseBtn.setAttribute("aria-expanded", String(nextOpen));
+  });
+
+  els.caseMenu.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-compare-sample]");
+    if (!button) return;
+    const samples = {
+      complex: [sampleLeft, sampleRight],
+      simple: [simpleLeft, simpleRight],
+    };
+    const [left, right] = samples[button.dataset.compareSample] || samples.complex;
+    els.left.value = left;
+    els.right.value = right;
+    els.caseMenu.hidden = true;
+    els.caseBtn.setAttribute("aria-expanded", "false");
     render();
+  });
+
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".case-menu")) {
+      els.caseMenu.hidden = true;
+      els.caseBtn.setAttribute("aria-expanded", "false");
+    }
   });
 
   document.querySelector("#compareClearBtn").addEventListener("click", () => {

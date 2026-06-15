@@ -23,6 +23,8 @@
     diffResult: document.querySelector("#diffResult"),
     search: document.querySelector("#searchInput"),
     toast: document.querySelector("#toast"),
+    caseMenuBtn: document.querySelector("#caseMenuBtn"),
+    caseMenu: document.querySelector("#caseMenu"),
     fontDown: document.querySelector("#fontDownBtn"),
     fontUp: document.querySelector("#fontUpBtn"),
     fontSizeLabel: document.querySelector("#fontSizeLabel"),
@@ -150,7 +152,9 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const seen = new Set();
     for (const item of found) {
       const comparable = item.repairedText || item.raw;
-      const key = `${item.valid}:${item.repaired}:${comparable.trim()}`;
+      const key = item.repaired
+        ? `${item.valid}:${item.repaired}:${comparable.trim()}`
+        : `${item.valid}:${item.repaired}:${item.start}:${item.end}`;
       if (!seen.has(key)) {
         seen.add(key);
         deduped.push(item);
@@ -544,7 +548,9 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const seen = new Set();
     for (const candidate of candidates) {
       const comparable = candidate.repairedText || candidate.raw;
-      const key = `${candidate.valid}:${candidate.repaired}:${comparable.trim()}`;
+      const key = candidate.repaired
+        ? `${candidate.valid}:${candidate.repaired}:${comparable.trim()}`
+        : `${candidate.valid}:${candidate.repaired}:${candidate.start}:${candidate.end}`;
       if (!seen.has(key)) {
         seen.add(key);
         output.push(candidate);
@@ -696,7 +702,84 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   }
 
   function renderRaw() {
-    els.raw.textContent = state.formatted || "";
+    renderJsonText(els.raw, state.parsed);
+  }
+
+  function renderJsonText(target, value) {
+    target.innerHTML = "";
+    if (value === null || value === undefined) {
+      target.textContent = state.formatted || "";
+      return;
+    }
+    renderJsonTextNode(target, null, value, 0, true, true, false);
+  }
+
+  function renderJsonTextNode(parent, key, value, depth, isLast, isRoot, parentIsArray) {
+    const isContainer = isContainerValue(value);
+    const node = document.createElement("div");
+    node.className = "json-text-node";
+
+    const line = document.createElement("div");
+    line.className = "json-text-line";
+    line.style.setProperty("--text-depth", depth);
+
+    const toggle = document.createElement("button");
+    toggle.type = "button";
+    toggle.className = isContainer ? "json-text-toggle" : "json-text-toggle empty";
+    toggle.textContent = isContainer ? "▾" : "";
+    line.append(toggle);
+
+    const code = document.createElement("code");
+    line.append(code);
+    node.append(line);
+
+    if (!isContainer) {
+      code.textContent = `${jsonTextPrefix(key, isRoot, parentIsArray)}${formatJsonScalar(value)}${isLast ? "" : ","}`;
+      parent.append(node);
+      return;
+    }
+
+    const isArray = Array.isArray(value);
+    const opener = isArray ? "[" : "{";
+    const closer = isArray ? "]" : "}";
+    const expandedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}`;
+    const collapsedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}...${closer}${isLast ? "" : ","}`;
+    code.textContent = expandedText;
+
+    const children = document.createElement("div");
+    children.className = "json-text-children";
+    const entries = isArray ? value.map((item, index) => [index, item]) : Object.entries(value);
+    entries.forEach(([childKey, childValue], index) => {
+      renderJsonTextNode(children, childKey, childValue, depth + 1, index === entries.length - 1, false, isArray);
+    });
+    node.append(children);
+
+    const closing = document.createElement("div");
+    closing.className = "json-text-line json-text-closing";
+    closing.style.setProperty("--text-depth", depth);
+    const closingSpacer = document.createElement("span");
+    closingSpacer.className = "json-text-toggle empty";
+    const closingCode = document.createElement("code");
+    closingCode.textContent = `${closer}${isLast ? "" : ","}`;
+    closing.append(closingSpacer, closingCode);
+    node.append(closing);
+
+    toggle.addEventListener("click", () => {
+      const collapsed = node.classList.toggle("collapsed");
+      toggle.textContent = collapsed ? "▸" : "▾";
+      code.textContent = collapsed ? collapsedText : expandedText;
+    });
+
+    parent.append(node);
+  }
+
+  function jsonTextPrefix(key, isRoot, parentIsArray) {
+    if (isRoot || parentIsArray) return "";
+    return `${JSON.stringify(String(key))}: `;
+  }
+
+  function formatJsonScalar(value) {
+    return JSON.stringify(value);
   }
 
   function renderTree() {
@@ -706,11 +789,11 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       return;
     }
     const frag = document.createDocumentFragment();
-    renderNode(frag, "root", state.parsed, "$", 0);
+    renderNode(frag, "root", state.parsed, "$", 0, null);
     els.tree.append(frag);
   }
 
-  function renderNode(parent, key, value, path, depth) {
+  function renderNode(parent, key, value, path, depth, parentValue) {
     const row = document.createElement("div");
     row.className = "node";
     row.classList.add(isContainerValue(value) ? "container-node" : "scalar-node");
@@ -729,6 +812,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const main = document.createElement("div");
     main.className = "node-main";
     main.innerHTML = renderNodeLabel(key, value, childCount);
+    attachNodeEditing(main, key, value, parentValue, path);
     row.append(main);
 
     const actions = document.createElement("div");
@@ -765,7 +849,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       const childRows = [];
       for (const [childKey, childValue] of Object.entries(value)) {
         const before = parent.childNodes.length;
-        renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1);
+        renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1, value);
         for (let i = before; i < parent.childNodes.length; i += 1) {
           childRows.push(parent.childNodes[i]);
         }
@@ -776,6 +860,117 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
         for (const child of childRows) child.classList.toggle("hidden", collapsed);
       });
     }
+  }
+
+  function attachNodeEditing(main, key, value, parentValue, path) {
+    const keyEl = main.querySelector(".key");
+    const valueEl = main.querySelector(".value-preview");
+    const keyEditable = parentValue && !Array.isArray(parentValue) && key !== "root";
+    const valueEditable = !isContainerValue(value);
+
+    if (keyEl && keyEditable) {
+      keyEl.classList.add("editable-token");
+      keyEl.title = "双击编辑 key";
+      keyEl.addEventListener("dblclick", (event) => {
+        event.stopPropagation();
+        startInlineEdit(keyEl, String(key), (nextKey) => commitKeyEdit(parentValue, key, nextKey));
+      });
+    }
+
+    if (valueEl && valueEditable) {
+      valueEl.classList.add("editable-token");
+      valueEl.title = "双击编辑 value";
+      valueEl.addEventListener("dblclick", (event) => {
+        event.stopPropagation();
+        startInlineEdit(valueEl, editableValueText(value), (nextValue) =>
+          commitValueEdit(parentValue, key, value, nextValue, path),
+        );
+      });
+    }
+  }
+
+  function startInlineEdit(target, initialValue, onCommit) {
+    if (target.querySelector("input")) return;
+    const input = document.createElement("input");
+    input.className = "inline-edit-input";
+    input.value = initialValue;
+    target.replaceChildren(input);
+    input.focus();
+    input.select();
+
+    let done = false;
+    const finish = (commit) => {
+      if (done) return;
+      done = true;
+      if (commit) onCommit(input.value);
+      else renderAll();
+    };
+
+    input.addEventListener("keydown", (event) => {
+      if (event.key === "Enter") finish(true);
+      if (event.key === "Escape") finish(false);
+    });
+    input.addEventListener("blur", () => finish(true));
+  }
+
+  function commitKeyEdit(parentValue, oldKey, newKey) {
+    const trimmed = newKey.trim();
+    if (!trimmed || trimmed === String(oldKey)) {
+      renderAll();
+      return;
+    }
+    if (Object.prototype.hasOwnProperty.call(parentValue, trimmed)) {
+      showToast("同级已经存在这个 key");
+      renderAll();
+      return;
+    }
+    renameObjectKey(parentValue, oldKey, trimmed);
+    syncParsedToSource();
+  }
+
+  function commitValueEdit(parentValue, key, oldValue, inputValue, path) {
+    const parsed = parseEditedValue(inputValue, oldValue);
+    if (!parsed.ok) {
+      showToast(`值格式不正确：${parsed.error}`);
+      renderAll();
+      return;
+    }
+    if (parentValue === null) {
+      state.parsed = parsed.value;
+    } else {
+      parentValue[key] = parsed.value;
+    }
+    syncParsedToSource(path);
+  }
+
+  function editableValueText(value) {
+    if (typeof value === "string") return value;
+    return JSON.stringify(value);
+  }
+
+  function parseEditedValue(inputValue, oldValue) {
+    if (typeof oldValue === "string") return { ok: true, value: inputValue };
+    try {
+      return { ok: true, value: JSON.parse(inputValue) };
+    } catch (error) {
+      return { ok: false, error: error.message };
+    }
+  }
+
+  function renameObjectKey(target, oldKey, newKey) {
+    const entries = Object.entries(target);
+    for (const key of Object.keys(target)) delete target[key];
+    for (const [entryKey, entryValue] of entries) {
+      target[entryKey === String(oldKey) ? newKey : entryKey] = entryValue;
+    }
+  }
+
+  function syncParsedToSource() {
+    state.formatted = stringifyPretty(state.parsed);
+    els.source.value = state.formatted;
+    resetMaskState();
+    analyze();
+    showToast("已同步到左侧输入");
   }
 
   function renderNodeLabel(key, value, childCount) {
@@ -1090,22 +1285,33 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       .replace(/"/g, "&quot;");
   }
 
-  document.querySelector("#sampleBtn").addEventListener("click", () => {
-    els.source.value = sample;
+  els.caseMenuBtn.addEventListener("click", (event) => {
+    event.stopPropagation();
+    const nextOpen = els.caseMenu.hidden;
+    els.caseMenu.hidden = !nextOpen;
+    els.caseMenuBtn.setAttribute("aria-expanded", String(nextOpen));
+  });
+
+  els.caseMenu.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-sample]");
+    if (!button) return;
+    const samples = {
+      normal: sample,
+      multi: multiSample,
+      long: longSample,
+    };
+    els.source.value = samples[button.dataset.sample] || sample;
+    els.caseMenu.hidden = true;
+    els.caseMenuBtn.setAttribute("aria-expanded", "false");
     resetMaskState();
     analyze();
   });
 
-  document.querySelector("#multiSampleBtn").addEventListener("click", () => {
-    els.source.value = multiSample;
-    resetMaskState();
-    analyze();
-  });
-
-  document.querySelector("#longSampleBtn").addEventListener("click", () => {
-    els.source.value = longSample;
-    resetMaskState();
-    analyze();
+  document.addEventListener("click", (event) => {
+    if (!event.target.closest(".case-menu")) {
+      els.caseMenu.hidden = true;
+      els.caseMenuBtn.setAttribute("aria-expanded", "false");
+    }
   });
 
   document.querySelector("#clearBtn").addEventListener("click", () => {
@@ -1131,15 +1337,6 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     resetMaskState();
     analyze();
     showToast("已回滚到脱敏前");
-  });
-
-  document.querySelector("#pasteBtn").addEventListener("click", async () => {
-    try {
-      els.source.value = await navigator.clipboard.readText();
-      analyze();
-    } catch {
-      showToast("浏览器没有授权读取剪贴板");
-    }
   });
 
   document.querySelector("#formatInputBtn").addEventListener("click", () => {

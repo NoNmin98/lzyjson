@@ -1,0 +1,68 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LZY JSON 合并</title>
+    <link rel="stylesheet" href="./styles.css" />
+  </head>
+  <body>
+    <main class="app-shell compare-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">{ }</span>
+          <div>
+            <h1>JSON 合并</h1>
+            <p>把两份 JSON 合成一份可复制的结果</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <a class="icon-btn link-btn" href="./index.html">JSON 解析</a>
+          <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
+          <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
+        </div>
+      </header>
+
+      <section class="compare-workspace merge-workspace">
+        <div class="page-actions">
+          <div class="case-menu">
+            <button id="mergeCaseBtn" type="button" aria-expanded="false">案例</button>
+            <div id="mergeCaseMenu" class="case-popover" hidden>
+              <button type="button" data-merge-sample="basic">基础合并</button>
+              <button type="button" data-merge-sample="nested">嵌套覆盖</button>
+              <button type="button" data-merge-sample="array">数组合并</button>
+            </div>
+          </div>
+          <label class="merge-select">
+            <span>策略</span>
+            <select id="mergeMode">
+              <option value="deep">深度合并</option>
+              <option value="concat">数组追加</option>
+            </select>
+          </label>
+          <button id="mergeCopyBtn" type="button">复制结果</button>
+          <button id="mergeClearBtn" type="button">清空</button>
+        </div>
+
+        <section class="compare-grid">
+          <label class="compare-pane">
+            <span>左侧</span>
+            <textarea id="leftInput" spellcheck="false" placeholder="粘贴基础 JSON 或日志"></textarea>
+          </label>
+          <label class="compare-pane">
+            <span>右侧</span>
+            <textarea id="rightInput" spellcheck="false" placeholder="粘贴要合并进去的 JSON 或日志"></textarea>
+          </label>
+        </section>
+
+        <section class="compare-result-pane">
+          <div id="mergeSummary" class="diff-summary">等待输入</div>
+          <div id="mergeResult" class="merge-output json-text-view"></div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./merge.js"></script>
+  </body>
+</html>

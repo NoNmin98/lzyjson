@@ -17,14 +17,9 @@
           </div>
         </div>
         <div class="top-actions">
-          <button id="sampleBtn" class="icon-btn" type="button" title="载入示例">示例</button>
-          <button id="multiSampleBtn" class="icon-btn" type="button" title="载入多 JSON 示例">
-            多 JSON
-          </button>
-          <button id="longSampleBtn" class="icon-btn" type="button" title="载入超长示例">
-            长示例
-          </button>
-          <a class="icon-btn link-btn" href="./compare.html">对比</a>
+          <a class="icon-btn link-btn" href="./index.html">JSON 解析</a>
+          <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
+          <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
         </div>
       </header>
 
@@ -36,8 +31,15 @@
               <span id="inputMeta">0 字符</span>
             </div>
             <div class="inline-actions">
-              <button id="pasteBtn" type="button">粘贴</button>
-              <button id="formatInputBtn" type="button">提取后格式化</button>
+              <div class="case-menu">
+                <button id="caseMenuBtn" type="button" aria-expanded="false">案例</button>
+                <div id="caseMenu" class="case-popover" hidden>
+                  <button type="button" data-sample="normal">日志 JSON</button>
+                  <button type="button" data-sample="multi">多 JSON</button>
+                  <button type="button" data-sample="long">超长 JSON</button>
+                </div>
+              </div>
+              <button id="formatInputBtn" type="button">格式化</button>
             </div>
           </div>
           <textarea
@@ -129,7 +131,7 @@
 
           <div class="view-stack">
             <div id="treeView" class="tree-view"></div>
-            <pre id="rawView" class="raw-view" hidden></pre>
+            <div id="rawView" class="raw-view json-text-view" hidden></div>
             <div id="tableView" class="table-view" hidden></div>
             <div id="diffView" class="diff-view" hidden>
               <div class="diff-input-row">

@@ -120,9 +120,18 @@
         inString = true;
         continue;
       }
-      if (classifyChar(ch)) starts.push(i);
+      if (classifyChar(ch) && shouldStartCandidate(text, i)) starts.push(i);
     }
     return starts;
+  }
+
+  function shouldStartCandidate(text, index) {
+    const ch = text[index];
+    if (ch === "{") return true;
+    if (ch !== "[") return false;
+    const previous = text[index - 1] || "";
+    if (!previous || /\s/.test(previous)) return true;
+    return ["=", ":", ",", "(", "{", "["].includes(previous);
   }
 
   function scanFrom(text, start) {

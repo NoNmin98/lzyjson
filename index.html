@@ -63,8 +63,7 @@
             </div>
             <div class="inline-actions">
               <button id="copyBtn" type="button">复制</button>
-              <button id="copyDecodedBtn" type="button">复制中文</button>
-              <button id="minifyBtn" type="button">压缩</button>
+              <button id="minifyBtn" type="button">复制压缩文本</button>
               <button id="maskToggleBtn" type="button">脱敏</button>
               <button id="clearBtn" type="button">清空</button>
             </div>
@@ -115,6 +114,11 @@
                 <input id="expandStringJsonOption" type="checkbox" />
                 <span>字符串 JSON</span>
               </label>
+            </div>
+            <div class="font-controls" aria-label="文本字号">
+              <button id="fontDownBtn" type="button">A-</button>
+              <span id="fontSizeLabel">13px</span>
+              <button id="fontUpBtn" type="button">A+</button>
             </div>
             <div class="tabs" role="tablist" aria-label="结果视图">
               <button class="tab active" id="treeTab" type="button">树</button>

@@ -23,6 +23,9 @@
     diffResult: document.querySelector("#diffResult"),
     search: document.querySelector("#searchInput"),
     toast: document.querySelector("#toast"),
+    fontDown: document.querySelector("#fontDownBtn"),
+    fontUp: document.querySelector("#fontUpBtn"),
+    fontSizeLabel: document.querySelector("#fontSizeLabel"),
     options: {
       decodeUnicode: document.querySelector("#decodeUnicodeOption"),
       expandStringJson: document.querySelector("#expandStringJsonOption"),
@@ -43,6 +46,7 @@
     activeView: "tree",
     maskedBefore: null,
     contextOpen: false,
+    codeFontSize: Number(localStorage.getItem("lzyjson-code-font-size")) || 13,
   };
 
   const sample = `2026-06-12 17:20:18 INFO traceId=ab8c request finished body={"code":0,"msg":"\\\\u7528\\\\u6237\\\\u4e0d\\\\u5b58\\\\u5728","data":"{\\\"user\\\":{\\\"id\\\":123,\\\"name\\\":\\\"\\\\u5f20\\\\u4e09\\\"},\\\"roles\\\":[\\\"admin\\\",\\\"ops\\\"]}","token":"Bearer abc.def.ghi","items":[{"id":1,"name":"alpha"},{"id":2,"name":"beta"}]} cost=42ms
@@ -181,12 +185,22 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       }
 
       const closer = classifyChar(ch);
-      if (closer) {
+      if (closer && shouldStartCandidate(text, i)) {
         starts.push(i);
       }
     }
 
     return starts;
+  }
+
+  function shouldStartCandidate(text, index) {
+    const ch = text[index];
+    if (ch === "{") return true;
+    if (ch !== "[") return false;
+
+    const previous = text[index - 1] || "";
+    if (!previous || /\s/.test(previous)) return true;
+    return ["=", ":", ",", "(", "{", "["].includes(previous);
   }
 
   function scanFrom(text, start) {
@@ -273,14 +287,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       }
     }
 
-    return {
-      ...scan,
-      parsed: null,
-      valid: false,
-      repaired: false,
-      label: labelFor(text, scan, "疑似 JSON"),
-      error: direct.error.message,
-    };
+    return null;
   }
 
   function findRepairablePrefix(scan) {
@@ -627,8 +634,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   }
 
   function contextToggleText(hasPrefix, hasSuffix) {
-    if (hasPrefix && hasSuffix) return "检测到前缀和后缀";
-    return hasPrefix ? "检测到前缀" : "检测到后缀";
+    return "检测到前后缀，点击查看";
   }
 
   function hasContextContent(value) {
@@ -1063,6 +1069,19 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     els.splitHandle.addEventListener("pointercancel", stopDrag);
   }
 
+  function applyCodeFontSize() {
+    const size = Math.min(18, Math.max(11, state.codeFontSize));
+    state.codeFontSize = size;
+    document.documentElement.style.setProperty("--code-font-size", `${size}px`);
+    els.fontSizeLabel.textContent = `${size}px`;
+    localStorage.setItem("lzyjson-code-font-size", String(size));
+  }
+
+  function changeCodeFontSize(delta) {
+    state.codeFontSize += delta;
+    applyCodeFontSize();
+  }
+
   function escapeHtml(value) {
     return String(value)
       .replace(/&/g, "&amp;")
@@ -1131,18 +1150,20 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   });
 
   document.querySelector("#copyBtn").addEventListener("click", () => {
+    const selected = state.candidates[state.selected];
+    if (!els.options.decodeUnicode.checked && selected) {
+      copyText(selected.repairedText || selected.raw || "");
+      return;
+    }
     copyText(state.formatted || "");
-  });
-
-  document.querySelector("#copyDecodedBtn").addEventListener("click", () => {
-    if (state.rawParsed === null) return;
-    const options = { ...getOptions(), decodeUnicode: true };
-    copyText(stringifyPretty(normalizeValue(state.rawParsed, options)));
   });
 
   document.querySelector("#minifyBtn").addEventListener("click", () => {
     if (state.parsed !== null) copyText(JSON.stringify(state.parsed));
   });
+
+  els.fontDown.addEventListener("click", () => changeCodeFontSize(-1));
+  els.fontUp.addEventListener("click", () => changeCodeFontSize(1));
 
   els.copyPrefix.addEventListener("click", () => copyText(els.prefix.dataset.raw || ""));
   els.copySuffix.addEventListener("click", () => copyText(els.suffix.dataset.raw || ""));
@@ -1166,6 +1187,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   els.options.decodeUnicode.addEventListener("change", refreshSelectedCandidate);
   els.options.expandStringJson.addEventListener("change", refreshSelectedCandidate);
   setupSplitResize();
+  applyCodeFontSize();
 
   analyze();
 })();

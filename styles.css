@@ -178,10 +178,10 @@ h1 {
 }
 
 .workspace {
-  --input-width: 48%;
+  --input-width: 38%;
   min-height: 0;
   display: grid;
-  grid-template-columns: minmax(260px, var(--input-width)) 8px minmax(360px, 1fr);
+  grid-template-columns: minmax(240px, var(--input-width)) 8px minmax(420px, 1fr);
   gap: 8px;
   padding: 12px;
 }
@@ -571,6 +571,8 @@ textarea {
   color: #48655e;
   font-family: inherit;
   line-height: 1;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .json-text-toggle:hover {
@@ -583,31 +585,31 @@ textarea {
 
 .tree-view {
   display: grid;
-  gap: 3px;
+  gap: 1px;
 }
 
 .node {
   position: relative;
-  min-height: 32px;
+  min-height: 26px;
   display: grid;
-  grid-template-columns: 24px minmax(0, 1fr) auto;
+  grid-template-columns: 20px minmax(0, 1fr) auto;
   align-items: center;
-  gap: 7px;
-  margin-left: calc(var(--depth) * 18px);
-  padding: 4px 8px 4px 2px;
+  gap: 5px;
+  margin-left: calc(var(--depth) * 14px);
+  padding: 2px 6px 2px 1px;
   border: 1px solid transparent;
-  border-radius: 6px;
+  border-radius: 5px;
   font-family: "SFMono-Regular", Consolas, "Liberation Mono", Menlo, monospace;
   font-size: var(--code-font-size);
-  line-height: 1.45;
+  line-height: 1.32;
 }
 
 .node::before {
   content: "";
   position: absolute;
-  left: -10px;
-  top: -4px;
-  bottom: -4px;
+  left: -8px;
+  top: -2px;
+  bottom: -2px;
   width: 1px;
   background: #dfe7e3;
   opacity: 0.85;
@@ -635,13 +637,15 @@ textarea {
 }
 
 .twisty {
-  width: 24px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   padding: 0;
   border: 0;
   background: transparent;
   color: #47645e;
-  font-size: 15px;
+  font-size: 13px;
+  user-select: none;
+  touch-action: manipulation;
 }
 
 .twisty.empty {
@@ -652,7 +656,7 @@ textarea {
   min-width: 0;
   display: flex;
   align-items: baseline;
-  gap: 7px;
+  gap: 5px;
   overflow-wrap: anywhere;
 }
 
@@ -690,6 +694,7 @@ textarea {
 .value-preview {
   min-width: 0;
   color: #30413d;
+  overflow-wrap: anywhere;
 }
 
 .editable-token {
@@ -717,39 +722,39 @@ textarea {
 .type-pill {
   display: inline-flex;
   align-items: center;
-  height: 20px;
-  padding: 0 7px;
-  border-radius: 999px;
-  background: #e8f2ef;
-  color: #176a5d;
+  height: 18px;
+  padding: 0 6px;
+  border-radius: 5px;
+  background: #eef1f0;
+  color: #7a8582;
   font-family: inherit;
   font-size: 11px;
-  font-weight: 700;
+  font-weight: 600;
 }
 
 .badge {
   display: inline-flex;
   align-items: center;
-  height: 20px;
-  margin-left: 6px;
+  height: 18px;
+  margin-left: 4px;
   padding: 0 6px;
-  border-radius: 999px;
-  background: #e9f4f0;
-  color: #0d6a5b;
+  border-radius: 5px;
+  background: #f0f2f1;
+  color: #7a8582;
   font-family: inherit;
   font-size: 11px;
 }
 
 .node-actions {
   display: flex;
-  gap: 5px;
+  gap: 4px;
   opacity: 0;
   white-space: nowrap;
 }
 
 .copy-action {
-  height: 24px;
-  padding: 0 7px;
+  height: 22px;
+  padding: 0 6px;
   border-color: #d2ddd9;
   background: #ffffff;
   font-size: 12px;

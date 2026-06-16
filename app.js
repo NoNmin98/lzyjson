@@ -790,6 +790,11 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const expandedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}`;
     const collapsedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}...${closer}${isLast ? "" : ","}`;
     code.textContent = expandedText;
+    node.__setTextCollapsed = (collapsed) => {
+      node.classList.toggle("collapsed", collapsed);
+      toggle.textContent = collapsed ? "▸" : "▾";
+      code.textContent = collapsed ? collapsedText : expandedText;
+    };
 
     const children = document.createElement("div");
     children.className = "json-text-children";
@@ -809,13 +814,22 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     closing.append(closingSpacer, closingCode);
     node.append(closing);
 
-    toggle.addEventListener("click", () => {
-      const collapsed = node.classList.toggle("collapsed");
-      toggle.textContent = collapsed ? "▸" : "▾";
-      code.textContent = collapsed ? collapsedText : expandedText;
+    attachPressActions(toggle, {
+      click: () => node.__setTextCollapsed(!node.classList.contains("collapsed")),
+      longPress: () => collapseTextToNextLevel(node),
     });
-
     parent.append(node);
+  }
+
+  function collapseTextToNextLevel(node) {
+    node.__setTextCollapsed?.(false);
+    const directChildren = Array.from(node.children).find((child) =>
+      child.classList.contains("json-text-children"),
+    );
+    if (!directChildren) return;
+    for (const child of directChildren.children) {
+      child.__setTextCollapsed?.(true);
+    }
   }
 
   function jsonTextPrefix(key, isRoot, parentIsArray) {
@@ -843,6 +857,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     row.className = "node";
     row.classList.add(isContainerValue(value) ? "container-node" : "scalar-node");
     row.style.setProperty("--depth", depth);
+    row.dataset.path = path;
     row.dataset.search = `${path} ${key} ${searchText(value)}`.toLowerCase();
 
     const isObject = value && typeof value === "object";
@@ -891,20 +906,89 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     parent.append(row);
 
     if (childCount) {
-      const childRows = [];
+      const directChildRows = [];
       for (const [childKey, childValue] of Object.entries(value)) {
         const before = parent.childNodes.length;
         renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1, value);
-        for (let i = before; i < parent.childNodes.length; i += 1) {
-          childRows.push(parent.childNodes[i]);
-        }
+        directChildRows.push(parent.childNodes[before]);
       }
-      twisty.addEventListener("click", () => {
-        const collapsed = twisty.textContent === "▾";
+      row.__directChildRows = directChildRows;
+      row.__setTreeCollapsed = (collapsed) => {
         twisty.textContent = collapsed ? "▸" : "▾";
-        for (const child of childRows) child.classList.toggle("hidden", collapsed);
+        row.dataset.collapsed = String(collapsed);
+        syncTreeChildrenVisibility(row, !isNodeHiddenByAncestor(row));
+      };
+      attachPressActions(twisty, {
+        click: () => row.__setTreeCollapsed(twisty.textContent === "▾"),
+        longPress: () => collapseTreeToNextLevel(row),
       });
     }
+  }
+
+  function collapseTreeToNextLevel(row) {
+    row.__setTreeCollapsed?.(false);
+    for (const child of row.__directChildRows || []) {
+      child.__setTreeCollapsed?.(true);
+      child.classList.toggle("hidden", false);
+    }
+  }
+
+  function syncTreeChildrenVisibility(row, parentVisible) {
+    const directChildren = row.__directChildRows || [];
+    const collapsed = row.dataset.collapsed === "true";
+    for (const child of directChildren) {
+      const childVisible = parentVisible && !collapsed;
+      child.classList.toggle("hidden", !childVisible);
+      syncTreeChildrenVisibility(child, childVisible);
+    }
+  }
+
+  function isNodeHiddenByAncestor(row) {
+    let current = row;
+    const currentDepth = nodeDepth(row);
+    while (current.previousElementSibling) {
+      current = current.previousElementSibling;
+      const depth = nodeDepth(current);
+      if (depth < currentDepth && current.dataset.collapsed === "true") return true;
+      if (depth === 0) return false;
+    }
+    return false;
+  }
+
+  function nodeDepth(row) {
+    return Number(row.style.getPropertyValue("--depth")) || 0;
+  }
+
+  function attachPressActions(target, handlers) {
+    let timer = null;
+    let longPressed = false;
+
+    const clear = () => {
+      clearTimeout(timer);
+      timer = null;
+    };
+
+    target.addEventListener("pointerdown", () => {
+      longPressed = false;
+      clear();
+      timer = setTimeout(() => {
+        longPressed = true;
+        handlers.longPress();
+      }, 520);
+    });
+
+    target.addEventListener("pointerup", clear);
+    target.addEventListener("pointerleave", clear);
+    target.addEventListener("pointercancel", clear);
+    target.addEventListener("click", (event) => {
+      if (longPressed) {
+        event.preventDefault();
+        event.stopPropagation();
+        longPressed = false;
+        return;
+      }
+      handlers.click();
+    });
   }
 
   function attachNodeEditing(main, key, value, parentValue, path) {
@@ -1042,11 +1126,22 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   }
 
   function formatScalar(value) {
-    if (typeof value === "string") return `<span class="string">"${escapeHtml(value)}"</span>`;
+    if (typeof value === "string") {
+      const preview = compactPreview(value, 180);
+      const title = preview === value ? "" : ` title="${escapeHtml(value)}"`;
+      return `<span class="string"${title}>"${escapeHtml(preview)}"</span>`;
+    }
     if (typeof value === "number") return `<span class="number">${value}</span>`;
     if (typeof value === "boolean") return `<span class="boolean">${value}</span>`;
     if (value === null) return '<span class="null">null</span>';
-    return `<span>${escapeHtml(String(value))}</span>`;
+    return `<span>${escapeHtml(compactPreview(String(value), 180))}</span>`;
+  }
+
+  function compactPreview(value, limit) {
+    if (value.length <= limit) return value;
+    const head = Math.max(20, Math.floor(limit * 0.65));
+    const tail = Math.max(10, limit - head - 8);
+    return `${value.slice(0, head)} ... ${value.slice(-tail)}`;
   }
 
   function formatCopyValue(value) {

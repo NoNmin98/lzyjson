@@ -1,0 +1,76 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>LZY 转义</title>
+    <link rel="stylesheet" href="./styles.css?v=20260615-asset5" />
+  </head>
+  <body>
+    <main class="app-shell compare-shell">
+      <header class="topbar">
+        <div class="brand">
+          <span class="brand-mark">{ }</span>
+          <div>
+            <h1>转义</h1>
+            <p>处理 JSON 字符串、中文 Unicode 和 URL 编码</p>
+          </div>
+        </div>
+        <div class="top-actions">
+          <a class="icon-btn link-btn" href="./parse.html">JSON 解析</a>
+          <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
+          <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
+          <a class="icon-btn link-btn" href="./escape.html">转义</a>
+        </div>
+      </header>
+
+      <section class="compare-workspace escape-workspace">
+        <div class="page-actions">
+          <div class="case-menu">
+            <button id="escapeCaseBtn" type="button" aria-expanded="false">案例</button>
+            <div id="escapeCaseMenu" class="case-popover" hidden>
+              <button type="button" data-escape-sample="json">JSON 转字符串</button>
+              <button type="button" data-escape-sample="string">转义字符串还原</button>
+              <button type="button" data-escape-sample="unicode">中文转义</button>
+              <button type="button" data-escape-sample="url">URL 转义</button>
+            </div>
+          </div>
+          <label class="merge-select">
+            <span>类型</span>
+            <select id="escapeMode">
+              <option value="json">JSON 字符串</option>
+              <option value="unicode">中文 Unicode</option>
+              <option value="url">URL 编码</option>
+            </select>
+          </label>
+          <button id="escapeBtn" type="button">转义</button>
+          <button id="unescapeBtn" type="button">还原</button>
+          <button id="escapeCopyBtn" type="button">复制结果</button>
+          <button id="escapeClearBtn" type="button">清空</button>
+        </div>
+
+        <section class="compare-grid">
+          <label class="compare-pane">
+            <span>输入</span>
+            <textarea
+              id="escapeInput"
+              spellcheck="false"
+              placeholder="粘贴 JSON、中文文本、URL 或已转义内容"
+            ></textarea>
+          </label>
+          <label class="compare-pane">
+            <span>结果</span>
+            <textarea id="escapeOutput" spellcheck="false" readonly></textarea>
+          </label>
+        </section>
+
+        <section class="compare-result-pane escape-help">
+          <div id="escapeSummary" class="diff-summary">等待输入</div>
+        </section>
+      </section>
+    </main>
+
+    <div id="toast" class="toast" role="status" aria-live="polite"></div>
+    <script src="./escape.js?v=20260616-urlfix1"></script>
+  </body>
+</html>

@@ -30,7 +30,8 @@
     fontSizeLabel: document.querySelector("#fontSizeLabel"),
     options: {
       decodeUnicode: document.querySelector("#decodeUnicodeOption"),
-      expandStringJson: document.querySelector("#expandStringJsonOption"),
+      expandStringJsonSingle: document.querySelector("#expandStringJsonSingleOption"),
+      expandStringJsonDeep: document.querySelector("#expandStringJsonDeepOption"),
     },
     tabs: {
       tree: document.querySelector("#treeTab"),
@@ -68,6 +69,42 @@
 {"ok":true,"data":{"list":[{"id":1},{"id":2333}]}}
 
 req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"body":{"ok":true,"name":"demo"}}`;
+
+  const escapedSingleSample = JSON.stringify(
+    {
+      code: 0,
+      body: JSON.stringify({
+        name: "张三",
+        msg: "你好",
+        tags: ["admin", "ops"],
+      }),
+      note: "开启单层转义 JSON 后，body 会展开为对象",
+    },
+    null,
+    2,
+  );
+
+  const escapedMultiSample = JSON.stringify(
+    {
+      code: 0,
+      data: JSON.stringify({
+        payload: JSON.stringify({
+          title: "测试",
+          user: {
+            id: 123,
+            name: "张三",
+          },
+          extra: JSON.stringify({
+            city: "杭州",
+            enabled: true,
+          }),
+        }),
+      }),
+      note: "开启多层转义 JSON 后，data.payload.extra 会继续展开",
+    },
+    null,
+    2,
+  );
 
   const longSample = buildLongSample();
 
@@ -396,13 +433,13 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     }
   }
 
-  function normalizeValue(value, options, depth = 0, seen = new WeakSet()) {
+  function normalizeValue(value, options, depth = 0, seen = new WeakSet(), stringJsonDepth = 0) {
     if (depth > options.maxDepth) return value;
 
     if (Array.isArray(value)) {
       if (seen.has(value)) return value;
       seen.add(value);
-      return value.map((item) => normalizeValue(item, options, depth + 1, seen));
+      return value.map((item) => normalizeValue(item, options, depth + 1, seen, stringJsonDepth));
     }
 
     if (value && typeof value === "object") {
@@ -410,7 +447,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       seen.add(value);
       const output = {};
       for (const [key, child] of Object.entries(value)) {
-        output[key] = normalizeValue(child, options, depth + 1, seen);
+        output[key] = normalizeValue(child, options, depth + 1, seen, stringJsonDepth);
       }
       return output;
     }
@@ -420,13 +457,13 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const decoded = options.decodeUnicode ? decodeLooseUnicode(value) : value;
     const trimmed = decoded.trim();
     if (
-      options.expandStringJson &&
+      shouldExpandStringJson(options, stringJsonDepth) &&
       ((trimmed.startsWith("{") && trimmed.endsWith("}")) ||
         (trimmed.startsWith("[") && trimmed.endsWith("]")))
     ) {
       const parsed = tryParse(trimmed);
       if (parsed.ok) {
-        const nested = normalizeValue(parsed.value, options, depth + 1, seen);
+        const nested = normalizeValue(parsed.value, options, depth + 1, seen, stringJsonDepth + 1);
         if (nested && typeof nested === "object") {
           Object.defineProperty(nested, "__lzyNestedJson", {
             value: true,
@@ -438,6 +475,12 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     }
 
     return decoded;
+  }
+
+  function shouldExpandStringJson(options, stringJsonDepth) {
+    if (options.expandStringJsonDeep) return stringJsonDepth < options.maxStringJsonDepth;
+    if (options.expandStringJsonSingle) return stringJsonDepth < 1;
+    return false;
   }
 
   function decodeLooseUnicode(value) {
@@ -597,8 +640,10 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   function getOptions() {
     return {
       decodeUnicode: els.options.decodeUnicode.checked,
-      expandStringJson: els.options.expandStringJson.checked,
+      expandStringJsonSingle: els.options.expandStringJsonSingle.checked,
+      expandStringJsonDeep: els.options.expandStringJsonDeep.checked,
       maxDepth: 8,
+      maxStringJsonDepth: 8,
     };
   }
 
@@ -1296,11 +1341,24 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const button = event.target.closest("[data-sample]");
     if (!button) return;
     const samples = {
-      normal: sample,
-      multi: multiSample,
-      long: longSample,
+      normal: { text: sample },
+      multi: { text: multiSample },
+      escapedSingle: {
+        text: escapedSingleSample,
+        options: { expandStringJsonSingle: true, expandStringJsonDeep: false },
+      },
+      escapedMulti: {
+        text: escapedMultiSample,
+        options: { expandStringJsonSingle: false, expandStringJsonDeep: true },
+      },
+      long: { text: longSample },
     };
-    els.source.value = samples[button.dataset.sample] || sample;
+    const selected = samples[button.dataset.sample] || samples.normal;
+    els.source.value = selected.text;
+    if (selected.options) {
+      els.options.expandStringJsonSingle.checked = selected.options.expandStringJsonSingle;
+      els.options.expandStringJsonDeep.checked = selected.options.expandStringJsonDeep;
+    }
     els.caseMenu.hidden = true;
     els.caseMenuBtn.setAttribute("aria-expanded", "false");
     resetMaskState();
@@ -1382,7 +1440,14 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   els.diffInput.addEventListener("input", debounce(renderDiff, 120));
   els.search.addEventListener("input", applySearch);
   els.options.decodeUnicode.addEventListener("change", refreshSelectedCandidate);
-  els.options.expandStringJson.addEventListener("change", refreshSelectedCandidate);
+  els.options.expandStringJsonSingle.addEventListener("change", () => {
+    if (els.options.expandStringJsonSingle.checked) els.options.expandStringJsonDeep.checked = false;
+    refreshSelectedCandidate();
+  });
+  els.options.expandStringJsonDeep.addEventListener("change", () => {
+    if (els.options.expandStringJsonDeep.checked) els.options.expandStringJsonSingle.checked = false;
+    refreshSelectedCandidate();
+  });
   setupSplitResize();
   applyCodeFontSize();
 

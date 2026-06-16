@@ -46,7 +46,7 @@
     parsed: null,
     rawParsed: null,
     formatted: "",
-    activeView: "tree",
+    activeView: readStorageValue("lzyjson-active-view", "tree"),
     maskedBefore: null,
     contextOpen: false,
     codeFontSize: Number(localStorage.getItem("lzyjson-code-font-size")) || 13,
@@ -1329,6 +1329,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
 
   function switchView(view) {
     state.activeView = view;
+    localStorage.setItem("lzyjson-active-view", view);
     els.tree.hidden = view !== "tree";
     els.raw.hidden = view !== "raw";
     els.table.hidden = view !== "table";
@@ -1379,6 +1380,10 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
 
   function setupSplitResize() {
     let dragging = false;
+    const savedWidth = Number(localStorage.getItem("lzyjson-input-width"));
+    if (savedWidth >= 28 && savedWidth <= 70) {
+      els.workspace.style.setProperty("--input-width", `${savedWidth}%`);
+    }
 
     els.splitHandle.addEventListener("pointerdown", (event) => {
       dragging = true;
@@ -1393,6 +1398,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       const percent = ((event.clientX - rect.left) / rect.width) * 100;
       const clamped = Math.min(70, Math.max(28, percent));
       els.workspace.style.setProperty("--input-width", `${clamped}%`);
+      localStorage.setItem("lzyjson-input-width", String(Math.round(clamped * 10) / 10));
     });
 
     function stopDrag() {
@@ -1415,6 +1421,40 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   function changeCodeFontSize(delta) {
     state.codeFontSize += delta;
     applyCodeFontSize();
+  }
+
+  function readStorageValue(key, fallback) {
+    const value = localStorage.getItem(key);
+    return value === null ? fallback : value;
+  }
+
+  function readStorageBool(key, fallback = false) {
+    const value = localStorage.getItem(key);
+    if (value === null) return fallback;
+    return value === "true";
+  }
+
+  function applyStoredParseSettings() {
+    const view = readStorageValue("lzyjson-active-view", "tree");
+    state.activeView = ["tree", "raw", "table"].includes(view) ? view : "tree";
+    els.options.decodeUnicode.checked = readStorageBool("lzyjson-decode-unicode");
+    els.options.expandStringJsonSingle.checked = readStorageBool("lzyjson-expand-string-json-single");
+    els.options.expandStringJsonDeep.checked = readStorageBool("lzyjson-expand-string-json-deep");
+    if (els.options.expandStringJsonDeep.checked) {
+      els.options.expandStringJsonSingle.checked = false;
+    }
+  }
+
+  function saveParseSettings() {
+    localStorage.setItem("lzyjson-decode-unicode", String(els.options.decodeUnicode.checked));
+    localStorage.setItem(
+      "lzyjson-expand-string-json-single",
+      String(els.options.expandStringJsonSingle.checked),
+    );
+    localStorage.setItem(
+      "lzyjson-expand-string-json-deep",
+      String(els.options.expandStringJsonDeep.checked),
+    );
   }
 
   function escapeHtml(value) {
@@ -1453,6 +1493,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     if (selected.options) {
       els.options.expandStringJsonSingle.checked = selected.options.expandStringJsonSingle;
       els.options.expandStringJsonDeep.checked = selected.options.expandStringJsonDeep;
+      saveParseSettings();
     }
     els.caseMenu.hidden = true;
     els.caseMenuBtn.setAttribute("aria-expanded", "false");
@@ -1534,15 +1575,21 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   els.source.addEventListener("input", debounce(analyze, 120));
   els.diffInput.addEventListener("input", debounce(renderDiff, 120));
   els.search.addEventListener("input", applySearch);
-  els.options.decodeUnicode.addEventListener("change", refreshSelectedCandidate);
+  els.options.decodeUnicode.addEventListener("change", () => {
+    saveParseSettings();
+    refreshSelectedCandidate();
+  });
   els.options.expandStringJsonSingle.addEventListener("change", () => {
     if (els.options.expandStringJsonSingle.checked) els.options.expandStringJsonDeep.checked = false;
+    saveParseSettings();
     refreshSelectedCandidate();
   });
   els.options.expandStringJsonDeep.addEventListener("change", () => {
     if (els.options.expandStringJsonDeep.checked) els.options.expandStringJsonSingle.checked = false;
+    saveParseSettings();
     refreshSelectedCandidate();
   });
+  applyStoredParseSettings();
   setupSplitResize();
   applyCodeFontSize();
 

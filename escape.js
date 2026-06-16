@@ -168,12 +168,14 @@
   }
 
   function runEscape() {
+    saveEscapeSettings();
     if (els.mode.value === "unicode") escapeUnicodeText();
     else if (els.mode.value === "url") escapeUrlText();
     else escapeJsonText();
   }
 
   function runUnescape() {
+    saveEscapeSettings();
     if (els.mode.value === "unicode") unescapeUnicodeText();
     else if (els.mode.value === "url") unescapeUrlText();
     else unescapeJsonText();
@@ -191,6 +193,15 @@
     showToast.timer = setTimeout(() => els.toast.classList.remove("show"), 1600);
   }
 
+  function applyStoredEscapeSettings() {
+    const savedMode = localStorage.getItem("lzyjson-escape-mode");
+    if (["json", "unicode", "url"].includes(savedMode)) els.mode.value = savedMode;
+  }
+
+  function saveEscapeSettings() {
+    localStorage.setItem("lzyjson-escape-mode", els.mode.value);
+  }
+
   els.caseBtn.addEventListener("click", (event) => {
     event.stopPropagation();
     const nextOpen = els.caseMenu.hidden;
@@ -206,15 +217,19 @@
     els.caseBtn.setAttribute("aria-expanded", "false");
     if (button.dataset.escapeSample === "string") {
       els.mode.value = "json";
+      saveEscapeSettings();
       runUnescape();
     } else if (button.dataset.escapeSample === "unicode") {
       els.mode.value = "unicode";
+      saveEscapeSettings();
       runEscape();
     } else if (button.dataset.escapeSample === "url") {
       els.mode.value = "url";
+      saveEscapeSettings();
       runUnescape();
     } else {
       els.mode.value = "json";
+      saveEscapeSettings();
       runEscape();
     }
   });
@@ -228,6 +243,7 @@
 
   els.escapeBtn.addEventListener("click", runEscape);
   els.unescapeBtn.addEventListener("click", runUnescape);
+  els.mode.addEventListener("change", saveEscapeSettings);
   els.copyBtn.addEventListener("click", async () => {
     if (!els.output.value) return;
     await navigator.clipboard.writeText(els.output.value);
@@ -237,4 +253,5 @@
     els.input.value = "";
     clearResult();
   });
+  applyStoredEscapeSettings();
 })();

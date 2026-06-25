@@ -1,0 +1,107 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>开工仪式 | LZY JSON</title>
+    <link rel="stylesheet" href="./styles.css?v=20260625-beian1" />
+  </head>
+  <body class="workday-page">
+    <main class="workday-shell" data-intro="ready">
+      <div class="workday-backdrop" aria-hidden="true">
+        <img src="./assets/workday-cinematic.png" alt="" />
+        <canvas id="particleCanvas"></canvas>
+        <span class="cinema-vignette"></span>
+        <span class="cinema-scan"></span>
+      </div>
+
+      <section id="ritualIntro" class="ritual-intro" aria-live="polite">
+        <span class="letterbox letterbox-top"></span>
+        <span class="letterbox letterbox-bottom"></span>
+        <span class="intro-static"></span>
+        <span class="intro-ambient intro-ambient-a"></span>
+        <span class="intro-ambient intro-ambient-b"></span>
+
+        <div class="slash-stage">
+          <button id="ritualTrigger" class="ritual-trigger" type="button" aria-label="准备好了，就开始">
+            <span class="ritual-text ritual-text-main">准备好了，就开始</span>
+            <span class="ritual-text ritual-text-half ritual-text-upper" aria-hidden="true">准备好了，就开始</span>
+            <span class="ritual-text ritual-text-half ritual-text-lower" aria-hidden="true">准备好了，就开始</span>
+            <span class="slash-blade" aria-hidden="true"></span>
+            <span class="slash-flare" aria-hidden="true"></span>
+            <span id="slashShards" class="slash-shards" aria-hidden="true"></span>
+          </button>
+        </div>
+      </section>
+
+      <section id="countdownStage" class="countdown-stage" hidden>
+        <header class="workday-topbar">
+          <a class="workday-brand" href="./index.html" aria-label="返回首页">
+            <span class="brand-mark">{ }</span>
+            <span>
+              <strong>开工仪式</strong>
+              <small>LZY JSON</small>
+            </span>
+          </a>
+          <nav class="top-actions" aria-label="页面导航">
+            <a class="icon-btn link-btn" href="./parse.html">JSON 解析</a>
+            <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
+            <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
+            <a class="icon-btn link-btn" href="./escape.html">转义</a>
+          </nav>
+        </header>
+
+        <section class="countdown-hero">
+          <div class="countdown-copy">
+            <p id="dateLabel" class="workday-eyebrow">今天</p>
+            <h1 id="countdownTitle">距离下班</h1>
+            <div class="time-grid" aria-label="下班倒计时">
+              <div class="time-unit">
+                <strong id="hoursValue">00</strong>
+                <span>小时</span>
+              </div>
+              <div class="time-unit">
+                <strong id="minutesValue">00</strong>
+                <span>分钟</span>
+              </div>
+              <div class="time-unit">
+                <strong id="secondsValue">00</strong>
+                <span>秒</span>
+              </div>
+            </div>
+            <p id="statusLine" class="workday-status">正在校准今日时间线</p>
+          </div>
+
+          <aside class="orbit-dashboard" aria-label="工作日进度">
+            <div id="progressOrbit" class="progress-orbit" style="--progress: 0deg">
+              <div>
+                <strong id="progressPercent">0%</strong>
+                <span>今日进度</span>
+              </div>
+            </div>
+
+            <div class="schedule-controls">
+              <label>
+                <span>开工</span>
+                <input id="startTimeInput" type="time" value="09:00" />
+              </label>
+              <label>
+                <span>下班</span>
+                <input id="offTimeInput" type="time" value="18:00" />
+              </label>
+              <button id="replayIntroBtn" type="button" aria-label="重播开场" title="重播开场">
+                <span aria-hidden="true">↻</span>
+              </button>
+            </div>
+          </aside>
+        </section>
+
+        <footer class="site-footer workday-footer">
+          <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2026028650号-2</a>
+        </footer>
+      </section>
+    </main>
+
+    <script src="./workday.js?v=20260617-slice1"></script>
+  </body>
+</html>

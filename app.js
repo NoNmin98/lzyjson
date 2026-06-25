@@ -1011,18 +1011,22 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       valueEl.title = "双击编辑 value";
       valueEl.addEventListener("dblclick", (event) => {
         event.stopPropagation();
-        startInlineEdit(valueEl, editableValueText(value), (nextValue) =>
-          commitValueEdit(parentValue, key, value, nextValue, path),
+        startInlineEdit(
+          valueEl,
+          editableValueText(value),
+          (nextValue) => commitValueEdit(parentValue, key, value, nextValue, path),
+          "value",
         );
       });
     }
   }
 
-  function startInlineEdit(target, initialValue, onCommit) {
+  function startInlineEdit(target, initialValue, onCommit, kind = "key") {
     if (target.querySelector("input")) return;
     const input = document.createElement("input");
-    input.className = "inline-edit-input";
+    input.className = `inline-edit-input ${kind === "value" ? "value-edit-input" : "key-edit-input"}`;
     input.value = initialValue;
+    target.classList.add("editing");
     target.replaceChildren(input);
     input.focus();
     input.select();
@@ -1031,6 +1035,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const finish = (commit) => {
       if (done) return;
       done = true;
+      target.classList.remove("editing");
       if (commit) onCommit(input.value);
       else renderAll();
     };
@@ -1127,21 +1132,12 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
 
   function formatScalar(value) {
     if (typeof value === "string") {
-      const preview = compactPreview(value, 180);
-      const title = preview === value ? "" : ` title="${escapeHtml(value)}"`;
-      return `<span class="string"${title}>"${escapeHtml(preview)}"</span>`;
+      return `<span class="string">"${escapeHtml(value)}"</span>`;
     }
     if (typeof value === "number") return `<span class="number">${value}</span>`;
     if (typeof value === "boolean") return `<span class="boolean">${value}</span>`;
     if (value === null) return '<span class="null">null</span>';
-    return `<span>${escapeHtml(compactPreview(String(value), 180))}</span>`;
-  }
-
-  function compactPreview(value, limit) {
-    if (value.length <= limit) return value;
-    const head = Math.max(20, Math.floor(limit * 0.65));
-    const tail = Math.max(10, limit - head - 8);
-    return `${value.slice(0, head)} ... ${value.slice(-tail)}`;
+    return `<span>${escapeHtml(String(value))}</span>`;
   }
 
   function formatCopyValue(value) {

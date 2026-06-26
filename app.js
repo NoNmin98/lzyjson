@@ -907,7 +907,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       return;
     }
     const frag = document.createDocumentFragment();
-    renderNode(frag, rootTreeLabel(state.parsed), state.parsed, "$", 0, null);
+    renderNode(frag, rootTreeLabel(state.parsed), state.parsed, "$", 0, null, null);
     els.tree.append(frag);
   }
 
@@ -917,13 +917,14 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     return "root";
   }
 
-  function renderNode(parent, key, value, path, depth, parentValue) {
+  function renderNode(parent, key, value, path, depth, parentValue, parentRow) {
     const row = document.createElement("div");
     row.className = "node";
     row.classList.add(isContainerValue(value) ? "container-node" : "scalar-node");
     row.style.setProperty("--depth", depth);
     row.dataset.path = path;
     row.dataset.search = `${path} ${key} ${searchText(value)}`.toLowerCase();
+    row.__parentRow = parentRow || null;
 
     const isObject = value && typeof value === "object";
     const childCount = isObject ? Object.keys(value).length : 0;
@@ -974,10 +975,10 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       const directChildRows = [];
       for (const [childKey, childValue] of Object.entries(value)) {
         const before = parent.childNodes.length;
-        renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1, value);
+        renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1, value, row);
         directChildRows.push(parent.childNodes[before]);
       }
-      const closingRow = renderTreeClosingRow(parent, value, depth);
+      const closingRow = renderTreeClosingRow(parent, value, depth, row);
       row.__directChildRows = directChildRows;
       row.__closingRow = closingRow;
       row.__setTreeCollapsedState = (collapsed) => {
@@ -995,11 +996,12 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     }
   }
 
-  function renderTreeClosingRow(parent, value, depth) {
+  function renderTreeClosingRow(parent, value, depth, parentRow) {
     const row = document.createElement("div");
     row.className = "node tree-closing-node";
     row.style.setProperty("--depth", depth);
     row.dataset.search = "";
+    row.__parentRow = parentRow || null;
 
     const spacer = document.createElement("span");
     spacer.className = "twisty empty";
@@ -1049,19 +1051,12 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   }
 
   function isNodeHiddenByAncestor(row) {
-    let current = row;
-    const currentDepth = nodeDepth(row);
-    while (current.previousElementSibling) {
-      current = current.previousElementSibling;
-      const depth = nodeDepth(current);
-      if (depth < currentDepth && current.dataset.collapsed === "true") return true;
-      if (depth === 0) return false;
+    let current = row.__parentRow || null;
+    while (current) {
+      if (current.dataset.collapsed === "true" || current.classList.contains("hidden")) return true;
+      current = current.__parentRow || null;
     }
     return false;
-  }
-
-  function nodeDepth(row) {
-    return Number(row.style.getPropertyValue("--depth")) || 0;
   }
 
   function attachPressActions(target, handlers) {

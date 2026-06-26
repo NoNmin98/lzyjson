@@ -3,54 +3,86 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-    <title>LZY JSON</title>
-    <link rel="stylesheet" href="./styles.css?v=20260625-beian1" />
+    <title>LZY 个人网站</title>
+    <link rel="stylesheet" href="./styles.css?v=20260625-home3" />
   </head>
   <body>
-    <main class="app-shell entry-shell">
-      <header class="topbar">
-        <div class="brand">
-          <span class="brand-mark">{ }</span>
+    <main class="app-shell home-shell">
+      <header class="topbar home-topbar">
+        <a class="brand home-brand" href="./index.html" aria-label="回到首页">
+          <span class="brand-mark">LZ</span>
           <div>
-            <h1>LZY JSON</h1>
-            <p>少一点干扰，多一点真正顺手的 JSON 工具</p>
+            <h1>LZY Space</h1>
+            <p>一些自己正在打磨的小工具和小作品</p>
           </div>
-        </div>
-        <div class="top-actions">
-          <a class="icon-btn link-btn" href="./parse.html">JSON 解析</a>
-          <a class="icon-btn link-btn" href="./compare.html">JSON 对比</a>
-          <a class="icon-btn link-btn" href="./merge.html">JSON 合并</a>
-          <a class="icon-btn link-btn" href="./escape.html">转义</a>
-          <a class="icon-btn link-btn" href="./workday.html">开工仪式</a>
-        </div>
+        </a>
+        <nav class="top-actions" aria-label="主导航">
+          <a class="icon-btn link-btn active" href="./index.html">首页</a>
+          <a class="icon-btn link-btn" href="./parse.html">小工具</a>
+          <a class="icon-btn link-btn" href="./workday.html">开工页面</a>
+          <a class="icon-btn link-btn" href="./miniapp.html">小程序简介</a>
+          <a class="icon-btn link-btn" href="./minigame.html">小程序小游戏</a>
+        </nav>
       </header>
 
-      <section class="entry-main">
-        <div class="entry-grid">
-          <a class="entry-card" href="./parse.html">
-            <strong>JSON 解析</strong>
-            <span>从日志、截断文本、转义字符串里提取和查看 JSON</span>
-          </a>
-          <a class="entry-card" href="./compare.html">
-            <strong>JSON 对比</strong>
-            <span>用类似 diff 的方式比较两份 JSON 的差异</span>
-          </a>
-          <a class="entry-card" href="./merge.html">
-            <strong>JSON 合并</strong>
-            <span>深度合并两份 JSON，支持数组追加</span>
-          </a>
-          <a class="entry-card" href="./escape.html">
-            <strong>转义</strong>
-            <span>处理 JSON 字符串、中文 Unicode 和 URL 编码</span>
-          </a>
-          <a class="entry-card" href="./workday.html">
-            <strong>开工仪式</strong>
-            <span>用一段电影感开场进入工作状态，然后看见下班倒计时</span>
-          </a>
+      <section class="home-hero visual-home" aria-label="个人网站首页">
+        <div class="visual-stage" aria-hidden="true">
+          <span class="stage-grid"></span>
+          <span class="stage-scanline"></span>
+          <span class="stage-beam beam-a"></span>
+          <span class="stage-beam beam-b"></span>
+          <span class="stage-beam beam-c"></span>
+          <div class="stage-rings">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
+          <div class="stage-core">
+            <span>L</span>
+            <span>Z</span>
+            <span>Y</span>
+          </div>
+          <div class="stage-particles">
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+            <i></i><i></i><i></i><i></i><i></i><i></i><i></i><i></i>
+          </div>
+          <div class="stage-lines">
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+            <span></span>
+          </div>
         </div>
+
+        <div class="visual-title">
+          <span>Personal Website</span>
+          <h2>LZY Space</h2>
+          <p>Building useful things, one page at a time.</p>
+        </div>
+
+        <nav class="home-quick-entry" aria-label="首页入口">
+          <a href="./parse.html">
+            <span>小工具</span>
+            <strong>JSON / 编码 / 对比</strong>
+          </a>
+          <a href="./workday.html">
+            <span>开工页面</span>
+            <strong>仪式感和倒计时</strong>
+          </a>
+          <a href="./miniapp.html">
+            <span>小程序</span>
+            <strong>作品和能力简介</strong>
+          </a>
+          <a href="./minigame.html">
+            <span>小游戏</span>
+            <strong>轻量玩法实验</strong>
+          </a>
+        </nav>
       </section>
 
-      <footer class="site-footer">
+      <footer class="site-footer home-footer">
         <a href="https://beian.miit.gov.cn/" target="_blank" rel="noopener noreferrer">京ICP备2026028650号-2</a>
       </footer>
     </main>

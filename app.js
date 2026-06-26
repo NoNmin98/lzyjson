@@ -779,7 +779,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     node.append(line);
 
     if (!isContainer) {
-      code.textContent = `${jsonTextPrefix(key, isRoot, parentIsArray)}${formatJsonScalar(value)}${isLast ? "" : ","}`;
+      renderJsonTextScalarLine(code, key, value, isLast, isRoot, parentIsArray);
       parent.append(node);
       return;
     }
@@ -787,13 +787,11 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const isArray = Array.isArray(value);
     const opener = isArray ? "[" : "{";
     const closer = isArray ? "]" : "}";
-    const expandedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}`;
-    const collapsedText = `${jsonTextPrefix(key, isRoot, parentIsArray)}${opener}...${closer}${isLast ? "" : ","}`;
-    code.textContent = expandedText;
+    renderJsonTextContainerLine(code, key, opener, closer, isLast, isRoot, parentIsArray, false);
     node.__setTextCollapsed = (collapsed) => {
       node.classList.toggle("collapsed", collapsed);
       toggle.textContent = collapsed ? "▸" : "▾";
-      code.textContent = collapsed ? collapsedText : expandedText;
+      renderJsonTextContainerLine(code, key, opener, closer, isLast, isRoot, parentIsArray, collapsed);
     };
 
     const children = document.createElement("div");
@@ -810,7 +808,7 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     const closingSpacer = document.createElement("span");
     closingSpacer.className = "json-text-toggle empty";
     const closingCode = document.createElement("code");
-    closingCode.textContent = `${closer}${isLast ? "" : ","}`;
+    appendJsonTextPunctuation(closingCode, `${closer}${isLast ? "" : ","}`);
     closing.append(closingSpacer, closingCode);
     node.append(closing);
 
@@ -832,13 +830,61 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     }
   }
 
-  function jsonTextPrefix(key, isRoot, parentIsArray) {
-    if (isRoot || parentIsArray) return "";
-    return `${JSON.stringify(String(key))}: `;
+  function renderJsonTextScalarLine(target, key, value, isLast, isRoot, parentIsArray) {
+    target.replaceChildren();
+    appendJsonTextKeyPrefix(target, key, isRoot, parentIsArray);
+    appendJsonTextScalar(target, value);
+    if (!isLast) appendJsonTextPunctuation(target, ",");
   }
 
-  function formatJsonScalar(value) {
-    return JSON.stringify(value);
+  function renderJsonTextContainerLine(target, key, opener, closer, isLast, isRoot, parentIsArray, collapsed) {
+    target.replaceChildren();
+    appendJsonTextKeyPrefix(target, key, isRoot, parentIsArray);
+    appendJsonTextPunctuation(target, opener);
+    if (collapsed) {
+      appendJsonTextPunctuation(target, "...");
+      appendJsonTextPunctuation(target, closer);
+      if (!isLast) appendJsonTextPunctuation(target, ",");
+    }
+  }
+
+  function appendJsonTextKeyPrefix(target, key, isRoot, parentIsArray) {
+    if (isRoot || parentIsArray) return;
+    const keyToken = document.createElement("span");
+    keyToken.className = "json-text-key";
+    keyToken.textContent = JSON.stringify(String(key));
+    const separator = document.createElement("span");
+    separator.className = "json-text-punctuation";
+    separator.textContent = ": ";
+    target.append(keyToken, separator);
+  }
+
+  function appendJsonTextScalar(target, value) {
+    const token = document.createElement("span");
+    if (typeof value === "string") {
+      token.className = "json-text-string";
+      token.textContent = JSON.stringify(value);
+    } else if (typeof value === "number") {
+      token.className = "json-text-number";
+      token.textContent = JSON.stringify(value);
+    } else if (typeof value === "boolean") {
+      token.className = "json-text-boolean";
+      token.textContent = JSON.stringify(value);
+    } else if (value === null) {
+      token.className = "json-text-null";
+      token.textContent = "null";
+    } else {
+      token.className = "json-text-value";
+      token.textContent = JSON.stringify(value);
+    }
+    target.append(token);
+  }
+
+  function appendJsonTextPunctuation(target, value) {
+    const token = document.createElement("span");
+    token.className = "json-text-punctuation";
+    token.textContent = value;
+    target.append(token);
   }
 
   function renderTree() {
@@ -848,8 +894,14 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       return;
     }
     const frag = document.createDocumentFragment();
-    renderNode(frag, "root", state.parsed, "$", 0, null);
+    renderNode(frag, rootTreeLabel(state.parsed), state.parsed, "$", 0, null);
     els.tree.append(frag);
+  }
+
+  function rootTreeLabel(value) {
+    if (Array.isArray(value)) return "[";
+    if (value && typeof value === "object") return "{";
+    return "root";
   }
 
   function renderNode(parent, key, value, path, depth, parentValue) {

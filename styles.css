@@ -584,6 +584,33 @@ textarea {
   word-break: break-all;
 }
 
+.json-text-key {
+  color: #1d5275;
+  font-weight: 700;
+}
+
+.json-text-string {
+  color: #8a4b12;
+}
+
+.json-text-number,
+.json-text-boolean {
+  color: #6741a1;
+}
+
+.json-text-null {
+  color: #7b8790;
+  font-style: italic;
+}
+
+.json-text-punctuation {
+  color: #53625e;
+}
+
+.json-text-value {
+  color: #30413d;
+}
+
 .json-text-toggle {
   width: 18px;
   height: 22px;

@@ -248,7 +248,7 @@ h1 {
 
 .result-pane {
   position: relative;
-  grid-template-rows: auto auto auto auto auto minmax(0, 1fr);
+  grid-template-rows: auto auto auto auto auto auto minmax(0, 1fr);
 }
 
 .pane-head {
@@ -314,6 +314,13 @@ textarea {
   border-color: #efbdc2;
   background: #fff1f2;
   color: var(--danger);
+}
+
+.result-hint {
+  padding: 0 12px 8px;
+  color: #7a8582;
+  font-size: 12px;
+  line-height: 1.5;
 }
 
 .candidate-bar {
@@ -683,6 +690,17 @@ textarea {
   background: rgba(255, 255, 255, 0.3);
 }
 
+.tree-closing-node {
+  min-height: 22px;
+  background: transparent;
+  color: #74817d;
+}
+
+.tree-closing-node:hover {
+  border-color: transparent;
+  background: transparent;
+}
+
 .node.hidden {
   display: none;
 }
@@ -743,6 +761,11 @@ textarea {
 
 .node-separator {
   color: #97a5a1;
+}
+
+.tree-bracket {
+  color: #53625e;
+  font-weight: 800;
 }
 
 .value-preview {

@@ -825,8 +825,21 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
       child.classList.contains("json-text-children"),
     );
     if (!directChildren) return;
+    const childNodes = Array.from(directChildren.children).filter((child) => child.__setTextCollapsed);
+    const shouldExpand = childNodes.length > 0 && childNodes.every((child) => child.classList.contains("collapsed"));
+    for (const child of childNodes) {
+      setTextSubtreeCollapsed(child, !shouldExpand);
+    }
+  }
+
+  function setTextSubtreeCollapsed(node, collapsed) {
+    node.__setTextCollapsed?.(collapsed);
+    const directChildren = Array.from(node.children).find((child) =>
+      child.classList.contains("json-text-children"),
+    );
+    if (!directChildren) return;
     for (const child of directChildren.children) {
-      child.__setTextCollapsed?.(true);
+      if (child.__setTextCollapsed) setTextSubtreeCollapsed(child, collapsed);
     }
   }
 
@@ -964,10 +977,15 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
         renderNode(parent, childKey, childValue, nextPath(path, childKey), depth + 1, value);
         directChildRows.push(parent.childNodes[before]);
       }
+      const closingRow = renderTreeClosingRow(parent, value, depth);
       row.__directChildRows = directChildRows;
-      row.__setTreeCollapsed = (collapsed) => {
+      row.__closingRow = closingRow;
+      row.__setTreeCollapsedState = (collapsed) => {
         twisty.textContent = collapsed ? "▸" : "▾";
         row.dataset.collapsed = String(collapsed);
+      };
+      row.__setTreeCollapsed = (collapsed) => {
+        row.__setTreeCollapsedState(collapsed);
         syncTreeChildrenVisibility(row, !isNodeHiddenByAncestor(row));
       };
       attachPressActions(twisty, {
@@ -977,17 +995,52 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
     }
   }
 
+  function renderTreeClosingRow(parent, value, depth) {
+    const row = document.createElement("div");
+    row.className = "node tree-closing-node";
+    row.style.setProperty("--depth", depth);
+    row.dataset.search = "";
+
+    const spacer = document.createElement("span");
+    spacer.className = "twisty empty";
+    const main = document.createElement("div");
+    main.className = "node-main";
+    const mark = document.createElement("span");
+    mark.className = "tree-bracket";
+    mark.textContent = Array.isArray(value) ? "]" : "}";
+    main.append(mark);
+    const actions = document.createElement("div");
+    actions.className = "node-actions";
+
+    row.append(spacer, main, actions);
+    parent.append(row);
+    return row;
+  }
+
   function collapseTreeToNextLevel(row) {
-    row.__setTreeCollapsed?.(false);
+    row.__setTreeCollapsedState?.(false);
+    const directChildren = (row.__directChildRows || []).filter((child) => child.__setTreeCollapsed);
+    const shouldExpand =
+      directChildren.length > 0 && directChildren.every((child) => child.dataset.collapsed === "true");
+    for (const child of directChildren) {
+      setTreeSubtreeCollapsed(child, !shouldExpand);
+    }
+    syncTreeChildrenVisibility(row, !isNodeHiddenByAncestor(row));
+  }
+
+  function setTreeSubtreeCollapsed(row, collapsed) {
+    row.__setTreeCollapsedState?.(collapsed);
     for (const child of row.__directChildRows || []) {
-      child.__setTreeCollapsed?.(true);
-      child.classList.toggle("hidden", false);
+      if (child.__setTreeCollapsed) setTreeSubtreeCollapsed(child, collapsed);
     }
   }
 
   function syncTreeChildrenVisibility(row, parentVisible) {
     const directChildren = row.__directChildRows || [];
     const collapsed = row.dataset.collapsed === "true";
+    if (row.__closingRow) {
+      row.__closingRow.classList.toggle("hidden", !(parentVisible && !collapsed));
+    }
     for (const child of directChildren) {
       const childVisible = parentVisible && !collapsed;
       child.classList.toggle("hidden", !childVisible);
@@ -1162,10 +1215,13 @@ req={"method":"GET","path":"/api/user","query":{"id":123}} resp={"status":200,"b
   function renderNodeLabel(key, value, childCount) {
     const keyPart = `<span class="key">${escapeHtml(key)}</span>`;
     if (value && typeof value === "object") {
-      const type = Array.isArray(value) ? "Array" : "Object";
+      const isArray = Array.isArray(value);
+      const type = isArray ? "Array" : "Object";
+      const bracket = isArray ? "[" : "{";
       const nested = value.__lzyNestedJson ? '<span class="badge">字符串内 JSON</span>' : "";
       return `
         <span class="node-title">${keyPart}</span>
+        <span class="tree-bracket">${bracket}</span>
         <span class="type-pill">${type}</span>
         <span class="meta">${childCount} 项</span>
         ${nested}
